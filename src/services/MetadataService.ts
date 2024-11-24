@@ -23,7 +23,8 @@ class MetadataService{
          etag: response.headers['etag']
       };
    }
-   public async compareMetadata():Promise<boolean>{
+   public async compareMetadata(
+   ):Promise<boolean>{
       const headers=await this.getHeaders(envConfig.sunatUrl);
       const pathname=`${this.metadataZipFilePath}/${this.JsonFileName}`
       const storedMetadata = this.readMetadata(pathname);
@@ -37,9 +38,7 @@ class MetadataService{
    private readMetadata(path: string):IHeader{
       if(
          !fileHandler.existsInDataFolder(this.metadataZipFilePath) ||
-         !fileHandler.existsInDataFolder(
-            `${this.metadataZipFilePath}/${this.JsonFileName}`
-         )
+         !fileHandler.existsInDataFolder(path)
       ){
          fs.mkdirSync(this.metadataZipFilePath,{ recursive: true });
          fs.writeFileSync(path, JSON.stringify({}));
@@ -56,6 +55,7 @@ class MetadataService{
    ):boolean{
       const pathname=this.metadataZipFilePath
       const differences=diff(stored, current);
+
       if (stored['last-modified'] !== current['last-modified'] && stored['etag'] !== current['etag']){
          //convierte un objeto en una cadena de texto en formato JSON y lo guarda
          fs.writeFileSync(`${pathname}/${this.AuditJsonFileName}`, JSON.stringify(differences, null, 2), 'utf-8');

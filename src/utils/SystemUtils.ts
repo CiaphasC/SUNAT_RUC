@@ -31,11 +31,9 @@ export class SystemUtils{
             lineCount++;
             lineWorker++
             if (lineCount === 1) {
-               
                headers = this.processHeaders(line);
             }
             if(lineCount <= 1537704){
-               
             }
 
          }

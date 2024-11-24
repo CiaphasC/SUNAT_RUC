@@ -26,9 +26,8 @@ interface ItemObject {
     DEPARTAMENTO: string;
     MANZANA: string;
     KILOMETRO: string;
- }
+}
 if (!parentPort) throw new Error('Worker must run in a worker thread.');
-
 
 
 // Función para analizar una línea en un objeto.
@@ -68,35 +67,53 @@ function parseLineToObject(line: string): ItemObject {
         KILOMETRO: KILOMETRO.trim(),
     };
 }
+/**
+ * Escribe datos procesados en un WriteStream como un arreglo JSON.
+ * @param writeStream Stream de escritura.
+ * @param data Datos a procesar.
+ */
 async function writeStreamAsync(writeStream: fs.WriteStream, data: string[]){
     const buffer: string[] = [];
+    let isFirstObject=true;
     for (const line of data) {
         const processedResult = parseLineToObject(line);
-        buffer.push(JSON.stringify(processedResult));
+        const jsonString = JSON.stringify(processedResult);
+        if (!isFirstObject) {
+            buffer.push(`,${jsonString}`);
+        } else {
+            buffer.push(jsonString);
+            isFirstObject = false; // A partir de ahora, no será el primer objeto
+        }
 
         // Si el buffer alcanza un tamaño determinado, escribe el contenido en el stream
-        if (buffer.length >= 12000) { // Puedes ajustar este valor
-            await new Promise<void>((resolve, reject) => {
-                writeStream.write(buffer.join('\n') + '\n', 'utf-8', (err) => {
-                    if (err) reject(err);
-                    else resolve();
-                });
-            });
+        if (buffer.length >= 16000) { // Puedes ajustar este valor
+            await writeToStream(writeStream, buffer.join('\n')+'\n');
             buffer.length = 0; // Limpiar el buffer después de escribir
         }
     }
-
   // Escribe cualquier dato restante en el buffer
     if (buffer.length > 0) {
-        await new Promise<void>((resolve, reject) => {
-            writeStream.write(buffer.join('\n') + '\n', 'utf-8', (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+        await writeToStream(writeStream, buffer.join('\n')+'\n');
     }
+    await writeToStream(writeStream, ']');
 }
-
+/**
+ * Escribe texto directamente al WriteStream.
+ * @param writeStream Stream de escritura.
+ * @param text Texto a escribir.
+ */
+async function writeToStream(writeStream: fs.WriteStream, text: string){
+    await new Promise<void>((resolve, reject) => {
+        writeStream.write(text, 'utf-8', (err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+}
+/**
+ * Envía un mensaje de confirmación desde el worker.
+ * @param index Índice del worker.
+ */
 function mensaje(index: number): string {
     return `Procesado thread ${index} `;
 }
@@ -107,6 +124,7 @@ parentPort?.on('message', async(data: IData) => {
 
     const outputFile = path.join(appRoot.path,`${envConfig.metadataDirectoryPath}/processedResults-${index}.json`);
     const writeStream = fs.createWriteStream(outputFile, { encoding: 'utf-8',highWaterMark: bufferSizeCalculator.calculateBufferSize() });
+    writeStream.write('[\n', 'utf-8');
     await writeStreamAsync(writeStream, result);
     writeStream.end();
     writeStream.on('finish', () => {});
