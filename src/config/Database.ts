@@ -1,5 +1,5 @@
 import {DataSource} from 'typeorm';
-import {Record} from '../entities/Record';
+import {RecordEntity} from '../data/entities/RecordEntity';
 import {envConfig} from './envConfig';
 export const AppDataSource = new DataSource({
    type: 'mssql',
@@ -8,7 +8,8 @@ export const AppDataSource = new DataSource({
    username: envConfig.db.username,
    password: envConfig.db.password,
    database: envConfig.db.database,
-   entities: [Record],
+   entities: [RecordEntity],
+   logging: true,
    synchronize: true,
    options: {
       encrypt: false,

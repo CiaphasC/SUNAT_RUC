@@ -86,7 +86,7 @@ async function writeStreamAsync(writeStream: fs.WriteStream, data: string[]){
         }
 
         // Si el buffer alcanza un tamaño determinado, escribe el contenido en el stream
-        if (buffer.length >= 16000) { // Puedes ajustar este valor
+        if (buffer.length >= 30000) { // Puedes ajustar este valor
             await writeToStream(writeStream, buffer.join('\n')+'\n');
             buffer.length = 0; // Limpiar el buffer después de escribir
         }

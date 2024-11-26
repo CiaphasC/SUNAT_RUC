@@ -1,4 +1,5 @@
 
+import "reflect-metadata";
 import {sunatController} from '../controllers/SunatController';
 interface Main{
    eventMenu:()=>Promise<string>;
@@ -11,7 +12,9 @@ export const ComponentHandler=(()=>{
          await element.eventMenu().then(console.log);
          element.eventAction();
          await sunatController.checkForUpdates();
+
       }
+      
    }
 })();
                                         
@@ -33,4 +36,3 @@ export const Main:Main=(()=>{
       }
    }
 })();
-

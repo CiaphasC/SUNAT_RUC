@@ -92,7 +92,7 @@ function writeStreamAsync(writeStream, data) {
                         buffer.push(jsonString);
                         isFirstObject = false; // A partir de ahora, no será el primer objeto
                     }
-                    if (!(buffer.length >= 16000)) return [3 /*break*/, 3];
+                    if (!(buffer.length >= 30000)) return [3 /*break*/, 3];
                     return [4 /*yield*/, writeToStream(writeStream, buffer.join('\n') + '\n')];
                 case 2:
                     _a.sent();
