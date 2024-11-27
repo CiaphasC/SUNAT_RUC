@@ -5,13 +5,13 @@ import StreamArray from 'stream-json/streamers/StreamArray';
 import { RecordEntity, dataRepository } from '../data'; // Importamos el repositorio
 
 export class DatabaseInserter {
-   private batchSize: number = 1000;
+   private batchSize: number = 120;
 
    /**
    * Procesa archivos emitidos por el observable en orden.
    * @param fileObservable Observable que emite rutas de archivos.
    */
-   public processFilesInOrder(fileObservable: Observable<string>): void {
+   public processFilesInOrder(fileObservable: Observable<string>) : void {
       fileObservable
          .pipe(
             tap((filePath) => console.log(`[INFO] Procesando archivo ${filePath}`)),

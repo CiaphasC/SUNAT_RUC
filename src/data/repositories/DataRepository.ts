@@ -17,7 +17,7 @@ class DataRepository {
    */
    public async insertData(data: RecordEntity[]): Promise<void> {
       try {
-         await this.repository.save(data); // Inserta o actualiza registros.
+         await this.repository.insert(data); // Inserta o actualiza registros.
       } catch (error) {
          console.error('Error al insertar datos:', error);
          throw error;

@@ -57,7 +57,7 @@ var DataRepository = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, this.repository.save(data)];
+                        return [4 /*yield*/, this.repository.insert(data)];
                     case 1:
                         _a.sent(); // Inserta o actualiza registros.
                         return [3 /*break*/, 3];

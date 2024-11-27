@@ -36,3 +36,14 @@ export const Main:Main=(()=>{
       }
    }
 })();
+
+/* validaciones de entrada
+a un metodo darle una modularidad para que no todo dependa de el
+la logica para leer el archivo se haga en otro metodo
+el procesarlo tambien en otro metodo
+si el archivo es muy grande 
+la logica para leer el archivo en otro metodo
+el procesarlo en otro metodo
+
+
+*/

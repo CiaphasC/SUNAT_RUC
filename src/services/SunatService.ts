@@ -1,5 +1,5 @@
 import {FileProcessor , metadataService , databaseInserter} from './';
-import {FileWatcher} from '../infrastructure/FileWatcher';
+import {FileWatcherApp} from '../infrastructure/FileWatcherApp';
 import {envConfig} from '../config/envConfig';
 import {fileHandler,httpClient, SystemUtils} from '../utils';
 import path from 'path';
@@ -33,7 +33,7 @@ export class SunatService{
       const fileProcessor=new FileProcessor(FileSummary);
       await fileProcessor.distributeProcessing();
       await fileProcessor.process(`${this.absoluteDownloadedZipFilePath}/padron_reducido_ruc.txt`);
-      const fileWatcher = new FileWatcher(this.absoluteMetaDataPath);
+      const fileWatcher = new FileWatcherApp(this.absoluteMetaDataPath);
       fileWatcher.startWatching();
       fileWatcher.getFileObservable().subscribe({
          next: (_) => {

@@ -1,7 +1,7 @@
 // src/entities/Contribuyente.ts
 import { Entity, PrimaryColumn, Column } from 'typeorm';
 
-@Entity('CONTRIBUYENTES')
+@Entity('Contribuyentes')
 export class RecordEntity {
    @PrimaryColumn({ name: 'RUC', length: 11 })
    ruc: string = "";

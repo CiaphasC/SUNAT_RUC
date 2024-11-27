@@ -73,7 +73,7 @@ var RecordEntity = /** @class */ (function () {
         typeorm_1.Column({ name: 'KILOMETRO', length: 15, nullable: true })
     ], RecordEntity.prototype, "kilometro");
     RecordEntity = __decorate([
-        typeorm_1.Entity('CONTRIBUYENTES')
+        typeorm_1.Entity('Contribuyentes')
     ], RecordEntity);
     return RecordEntity;
 }());
