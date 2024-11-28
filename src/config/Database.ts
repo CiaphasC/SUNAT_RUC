@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
    password: envConfig.db.password,
    database: envConfig.db.database,
    entities: [RecordEntity],
-   logging: true,
+   logging: false,
    synchronize: true,
    options: {
       encrypt: false,

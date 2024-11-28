@@ -2,8 +2,8 @@ import { SystemUtils, bufferSizeCalculator } from '../utils';
 import {WorkerFactory} from '../workers/WorkerFactory';
 import * as os from 'os';
 import readline from 'readline';
-//import path from 'path';
 import fs from 'fs';
+import { dataRepository } from '../data';
 export class FileProcessor{
    private processFileLines:number;
    private processFileHeaders:string[];
@@ -20,6 +20,7 @@ export class FileProcessor{
       console.log("Numero de nucleos en el procesador:", os.cpus().length);
       console.log("Numero de Workers:",this.workerCount);
       console.log("Numero de lineas por Worker:",this.chunkSize);
+      dataRepository.truncateData();
    }
    public async process(filePath:string){
       const fileStream = fs.createReadStream(filePath, {highWaterMark: bufferSizeCalculator.calculateBufferSize(), encoding: `${'binary'}` });

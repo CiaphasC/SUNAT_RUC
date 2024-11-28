@@ -28,16 +28,16 @@ var RecordEntity = /** @class */ (function () {
         this.kilometro = "";
     }
     __decorate([
-        typeorm_1.PrimaryColumn({ name: 'RUC', length: 11 })
+        typeorm_1.PrimaryColumn({ name: 'RUC', length: 15 })
     ], RecordEntity.prototype, "ruc");
     __decorate([
-        typeorm_1.Column({ name: 'NOMBRE_O_RAZON_SOCIAL', length: 255 })
+        typeorm_1.Column({ name: 'NOMBRE_O_RAZON_SOCIAL', length: 300 })
     ], RecordEntity.prototype, "nombreRazonSocial");
     __decorate([
-        typeorm_1.Column({ name: 'ESTADO_DEL_CONTRIBUYENTE', length: 20 })
+        typeorm_1.Column({ name: 'ESTADO_DEL_CONTRIBUYENTE', length: 50 })
     ], RecordEntity.prototype, "estadoContribuyente");
     __decorate([
-        typeorm_1.Column({ name: 'CONDICION_DE_DOMICILIO', length: 50 })
+        typeorm_1.Column({ name: 'CONDICION_DE_DOMICILIO', length: 60 })
     ], RecordEntity.prototype, "condicionDomicilio");
     __decorate([
         typeorm_1.Column({ name: 'UBIGEO', length: 50 })
@@ -55,22 +55,22 @@ var RecordEntity = /** @class */ (function () {
         typeorm_1.Column({ name: 'TIPO_DE_ZONA', length: 55, nullable: true })
     ], RecordEntity.prototype, "tipoZona");
     __decorate([
-        typeorm_1.Column({ name: 'NUMERO', length: 15, nullable: true })
+        typeorm_1.Column({ name: 'NUMERO', length: 20, nullable: true })
     ], RecordEntity.prototype, "numero");
     __decorate([
-        typeorm_1.Column({ name: 'INTERIOR', length: 15, nullable: true })
+        typeorm_1.Column({ name: 'INTERIOR', length: 20, nullable: true })
     ], RecordEntity.prototype, "interior");
     __decorate([
-        typeorm_1.Column({ name: 'LOTE', length: 15, nullable: true })
+        typeorm_1.Column({ name: 'LOTE', length: 20, nullable: true })
     ], RecordEntity.prototype, "lote");
     __decorate([
-        typeorm_1.Column({ name: 'DEPARTAMENTO', length: 15, nullable: true })
+        typeorm_1.Column({ name: 'DEPARTAMENTO', length: 20, nullable: true })
     ], RecordEntity.prototype, "departamento");
     __decorate([
-        typeorm_1.Column({ name: 'MANZANA', length: 15, nullable: true })
+        typeorm_1.Column({ name: 'MANZANA', length: 20, nullable: true })
     ], RecordEntity.prototype, "manzana");
     __decorate([
-        typeorm_1.Column({ name: 'KILOMETRO', length: 15, nullable: true })
+        typeorm_1.Column({ name: 'KILOMETRO', length: 20, nullable: true })
     ], RecordEntity.prototype, "kilometro");
     RecordEntity = __decorate([
         typeorm_1.Entity('Contribuyentes')

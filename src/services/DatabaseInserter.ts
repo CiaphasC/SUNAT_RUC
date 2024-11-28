@@ -5,7 +5,7 @@ import StreamArray from 'stream-json/streamers/StreamArray';
 import { RecordEntity, dataRepository } from '../data'; // Importamos el repositorio
 
 export class DatabaseInserter {
-   private batchSize: number = 120;
+   private batchSize: number = 132;
 
    /**
    * Procesa archivos emitidos por el observable en orden.
@@ -18,8 +18,14 @@ export class DatabaseInserter {
             concatMap((filePath) => this.insertFromJsonStream(filePath)) // Procesamiento secuencial
          )
          .subscribe({
-            complete: () => console.log('[INFO] Todos los archivos han sido procesados.'),
-            error: (err) => console.error('[ERROR] Error procesando archivos:', err),
+            complete: () => {
+               console.log('[INFO] Todos los archivos han sido procesados.');
+               dataRepository.cleanup();
+            },
+            error: (err) => {
+               console.error('[ERROR] Error procesando archivos:', err);
+
+            }
          });
    }
 
@@ -45,6 +51,10 @@ export class DatabaseInserter {
             console.log(`[INFO] Insertadas ${lineNumber} líneas.`);
          batch = [];
          }
+      }
+      if (batch.length < this.batchSize) {
+         await dataRepository.insertData(batch);
+         console.log(`[INFO] Insertadas las últimas ${lineNumber} líneas.`);
       }
    }
 

@@ -1,15 +1,16 @@
-import { Repository } from 'typeorm';
+import { Repository, DataSource  } from 'typeorm';
 import { RecordEntity } from '../';
 import { AppDataSource } from '../../config/Database';
 class DataRepository {
    private repository: Repository<RecordEntity>;
-
+   private dataSource: DataSource;
    constructor() {
      // Inicializamos el repositorio usando AppDataSource
       AppDataSource.initialize()
          .then(() => console.log('Data Source Initialized'))
          .catch((error) => console.error('Error initializing data source:', error));
       this.repository = AppDataSource.getRepository(RecordEntity);
+      this.dataSource = AppDataSource;
    }
    /**
    * Inserta nuevos datos en la base de datos.
@@ -20,6 +21,16 @@ class DataRepository {
          await this.repository.insert(data); // Inserta o actualiza registros.
       } catch (error) {
          console.error('Error al insertar datos:', error);
+         throw error;
+      }
+   }
+   public async truncateData():Promise<void>{
+      try {
+         const tableName = this.dataSource.getMetadata(RecordEntity).tableName;
+         await this.dataSource.query(`TRUNCATE TABLE ${tableName}`); // Usa query directamente
+         console.log(`Tabla '${tableName}' truncada con éxito.`);
+      } catch (error) {
+         console.error('Error al truncar la tabla:', error);
          throw error;
       }
    }
@@ -70,6 +81,18 @@ class DataRepository {
       } catch (error) {
          console.error('Error al buscar registros:', error);
          throw error;
+      }
+   }
+   public async cleanup(): Promise<void> {
+      console.log('[INFO] Liberando recursos...');
+      try {
+         // Cerrar conexión con la base de datos, si está activa
+         if (AppDataSource.isInitialized) {
+            await AppDataSource.destroy(); // Desconecta el DataSource
+            console.log('[INFO] Conexión con la base de datos cerrada.');
+         }
+      } catch (error) {
+         console.error('[ERROR] Error al liberar recursos:', error);
       }
    }
 }

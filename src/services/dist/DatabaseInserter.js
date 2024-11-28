@@ -50,7 +50,7 @@ var StreamArray_1 = require("stream-json/streamers/StreamArray");
 var data_1 = require("../data"); // Importamos el repositorio
 var DatabaseInserter = /** @class */ (function () {
     function DatabaseInserter() {
-        this.batchSize = 120;
+        this.batchSize = 132;
     }
     /**
     * Procesa archivos emitidos por el observable en orden.
@@ -62,8 +62,13 @@ var DatabaseInserter = /** @class */ (function () {
             .pipe(operators_1.tap(function (filePath) { return console.log("[INFO] Procesando archivo " + filePath); }), operators_1.concatMap(function (filePath) { return _this.insertFromJsonStream(filePath); }) // Procesamiento secuencial
         )
             .subscribe({
-            complete: function () { return console.log('[INFO] Todos los archivos han sido procesados.'); },
-            error: function (err) { return console.error('[ERROR] Error procesando archivos:', err); }
+            complete: function () {
+                console.log('[INFO] Todos los archivos han sido procesados.');
+                data_1.dataRepository.cleanup();
+            },
+            error: function (err) {
+                console.error('[ERROR] Error procesando archivos:', err);
+            }
         });
     };
     /**
@@ -119,7 +124,14 @@ var DatabaseInserter = /** @class */ (function () {
                         if (e_1) throw e_1.error;
                         return [7 /*endfinally*/];
                     case 12: return [7 /*endfinally*/];
-                    case 13: return [2 /*return*/];
+                    case 13:
+                        if (!(batch.length < this.batchSize)) return [3 /*break*/, 15];
+                        return [4 /*yield*/, data_1.dataRepository.insertData(batch)];
+                    case 14:
+                        _b.sent();
+                        console.log("[INFO] Insertadas las \u00FAltimas " + lineNumber + " l\u00EDneas.");
+                        _b.label = 15;
+                    case 15: return [2 /*return*/];
                 }
             });
         });

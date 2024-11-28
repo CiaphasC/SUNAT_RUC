@@ -45,6 +45,7 @@ var DataRepository = /** @class */ (function () {
         Database_1.AppDataSource.initialize()
             .then(function () { return console.log('Data Source Initialized'); })["catch"](function (error) { return console.error('Error initializing data source:', error); });
         this.repository = Database_1.AppDataSource.getRepository(__1.RecordEntity);
+        this.dataSource = Database_1.AppDataSource;
     }
     /**
     * Inserta nuevos datos en la base de datos.
@@ -70,12 +71,34 @@ var DataRepository = /** @class */ (function () {
             });
         });
     };
+    DataRepository.prototype.truncateData = function () {
+        return __awaiter(this, void 0, Promise, function () {
+            var tableName, error_2;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 3]);
+                        tableName = this.dataSource.getMetadata(__1.RecordEntity).tableName;
+                        return [4 /*yield*/, this.dataSource.query("TRUNCATE TABLE " + tableName)];
+                    case 1:
+                        _a.sent(); // Usa query directamente
+                        console.log("Tabla '" + tableName + "' truncada con \u00E9xito.");
+                        return [3 /*break*/, 3];
+                    case 2:
+                        error_2 = _a.sent();
+                        console.error('Error al truncar la tabla:', error_2);
+                        throw error_2;
+                    case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
     /**
     * Elimina todos los datos existentes en la tabla.
     */
     DataRepository.prototype.deleteData = function () {
         return __awaiter(this, void 0, Promise, function () {
-            var error_2;
+            var error_3;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -85,9 +108,9 @@ var DataRepository = /** @class */ (function () {
                         _a.sent(); // Limpia todos los registros de la tabla.
                         return [3 /*break*/, 3];
                     case 2:
-                        error_2 = _a.sent();
-                        console.error('Error al eliminar datos:', error_2);
-                        throw error_2;
+                        error_3 = _a.sent();
+                        console.error('Error al eliminar datos:', error_3);
+                        throw error_3;
                     case 3: return [2 /*return*/];
                 }
             });
@@ -99,7 +122,7 @@ var DataRepository = /** @class */ (function () {
     */
     DataRepository.prototype.updateData = function (data) {
         return __awaiter(this, void 0, Promise, function () {
-            var error_3;
+            var error_4;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -112,9 +135,9 @@ var DataRepository = /** @class */ (function () {
                         _a.sent(); // Inserta los nuevos datos.
                         return [3 /*break*/, 4];
                     case 3:
-                        error_3 = _a.sent();
-                        console.error('Error al actualizar datos:', error_3);
-                        throw error_3;
+                        error_4 = _a.sent();
+                        console.error('Error al actualizar datos:', error_4);
+                        throw error_4;
                     case 4: return [2 /*return*/];
                 }
             });
@@ -126,7 +149,7 @@ var DataRepository = /** @class */ (function () {
     */
     DataRepository.prototype.getAllRecords = function () {
         return __awaiter(this, void 0, Promise, function () {
-            var error_4;
+            var error_5;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -134,9 +157,9 @@ var DataRepository = /** @class */ (function () {
                         return [4 /*yield*/, this.repository.find()];
                     case 1: return [2 /*return*/, _a.sent()];
                     case 2:
-                        error_4 = _a.sent();
-                        console.error('Error al obtener registros:', error_4);
-                        throw error_4;
+                        error_5 = _a.sent();
+                        console.error('Error al obtener registros:', error_5);
+                        throw error_5;
                     case 3: return [2 /*return*/];
                 }
             });
@@ -149,7 +172,7 @@ var DataRepository = /** @class */ (function () {
     */
     DataRepository.prototype.findByCriteria = function (criteria) {
         return __awaiter(this, void 0, Promise, function () {
-            var error_5;
+            var error_6;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -157,10 +180,36 @@ var DataRepository = /** @class */ (function () {
                         return [4 /*yield*/, this.repository.find({ where: criteria })];
                     case 1: return [2 /*return*/, _a.sent()];
                     case 2:
-                        error_5 = _a.sent();
-                        console.error('Error al buscar registros:', error_5);
-                        throw error_5;
+                        error_6 = _a.sent();
+                        console.error('Error al buscar registros:', error_6);
+                        throw error_6;
                     case 3: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    DataRepository.prototype.cleanup = function () {
+        return __awaiter(this, void 0, Promise, function () {
+            var error_7;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        console.log('[INFO] Liberando recursos...');
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 5]);
+                        if (!Database_1.AppDataSource.isInitialized) return [3 /*break*/, 3];
+                        return [4 /*yield*/, Database_1.AppDataSource.destroy()];
+                    case 2:
+                        _a.sent(); // Desconecta el DataSource
+                        console.log('[INFO] Conexión con la base de datos cerrada.');
+                        _a.label = 3;
+                    case 3: return [3 /*break*/, 5];
+                    case 4:
+                        error_7 = _a.sent();
+                        console.error('[ERROR] Error al liberar recursos:', error_7);
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
                 }
             });
         });

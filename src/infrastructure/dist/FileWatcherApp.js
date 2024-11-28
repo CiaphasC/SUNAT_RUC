@@ -24,6 +24,7 @@ var FileWatcherApp = /** @class */ (function (_super) {
     */
     function FileWatcherApp(folderPath) {
         var _this = _super.call(this) || this;
+        _this.filesInProgress = new Set();
         _this.watcher = chokidar_1["default"].watch(folderPath, { persistent: true, ignoreInitial: true });
         return _this;
     }
@@ -35,12 +36,21 @@ var FileWatcherApp = /** @class */ (function (_super) {
         this.watcher
             .on('add', function (filePath) {
             console.log("[INFO] Nuevo archivo detectado: " + filePath);
+            _this.filesInProgress.add(filePath); // Agregar al conjunto de archivos en progreso
             _this.waitForFileToBeStable(filePath)
-                .then(function () { return console.log("[INFO] Procesamiento finalizado para: " + filePath); })["catch"](function (err) { return console.error("[ERROR] Error procesando " + filePath + ": " + err.message); });
+                .then(function () {
+                console.log("[INFO] Procesamiento finalizado para: " + filePath);
+                _this.filesInProgress["delete"](filePath); // Eliminar del conjunto cuando termine
+                if (_this.filesInProgress.size === 0) {
+                    console.log('[INFO] Todos los archivos han sido procesados. Deteniendo la observación.');
+                    _this.stopWatching();
+                }
+            })["catch"](function (err) { return console.error("[ERROR] Error procesando " + filePath + ": " + err.message); });
         })
             .on('unlink', function (filePath) {
             console.log("[INFO] Archivo eliminado: " + filePath);
             _this.cancelFileWatch(filePath); // Cancelar monitoreo si el archivo ya no existe
+            _this.filesInProgress["delete"](filePath);
         });
     };
     /**
