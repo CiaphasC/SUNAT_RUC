@@ -1,3 +1,4 @@
+import { dataRepository } from '../data';
 import {envConfig} from '../config/envConfig';
 import {fileHandler} from '../utils';
 import {diff} from 'json-diff';
@@ -62,6 +63,7 @@ class MetadataService{
          console.log(`Diferencias guardadas en ${this.metadataZipFilePath}`);
       } else {
          console.log('No se encontraron diferencias.');
+         dataRepository.cleanup();
       }
       return stored['last-modified'] !== current['last-modified'] && stored['etag'] !== current['etag'];
    }

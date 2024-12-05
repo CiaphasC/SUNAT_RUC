@@ -1,6 +1,8 @@
 
 import "reflect-metadata";
 import {sunatController} from '../controllers/SunatController';
+import { sunatMetadataWatcher } from "../services/SunatMetadataWatcher ";
+import { concatMap } from "rxjs";
 interface Main{
    eventMenu:()=>Promise<string>;
    eventAction:()=>void;
@@ -11,10 +13,18 @@ export const ComponentHandler=(()=>{
       logAction:async (element:Main)=>{
          await element.eventMenu().then(console.log);
          element.eventAction();
-         await sunatController.checkForUpdates();
-
+         sunatMetadataWatcher.getMetadataChangesObservable().pipe(
+            concatMap(async () => {
+               console.log('[INFO] Detectado cambio en los metadatos, ejecutando actualización...');
+               await sunatController.checkForUpdates();
+               console.log('[INFO] Actualización completada.');
+            })
+         ).subscribe({
+            error: (err) => console.error('[ERROR] Error en el manejador de cambios de metadatos:', err),
+            complete: () => console.log('[INFO] Suscripción completada.')
+         });
+         //await sunatController.checkForUpdates();
       }
-      
    }
 })();
                                         
@@ -36,14 +46,3 @@ export const Main:Main=(()=>{
       }
    }
 })();
-
-/* validaciones de entrada
-a un metodo darle una modularidad para que no todo dependa de el
-la logica para leer el archivo se haga en otro metodo
-el procesarlo tambien en otro metodo
-si el archivo es muy grande 
-la logica para leer el archivo en otro metodo
-el procesarlo en otro metodo
-
-
-*/

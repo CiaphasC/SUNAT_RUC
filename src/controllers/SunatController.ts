@@ -8,9 +8,5 @@ class SunatController{
          console.error("Error en checkForUpdates:", error);
       }
    }
-
-   public async processData(): Promise<void>{
-
-   }
 }
 export const sunatController = new SunatController();

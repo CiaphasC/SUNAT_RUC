@@ -32,16 +32,10 @@ export class SunatService{
       );
       const fileProcessor=new FileProcessor(FileSummary);
       await fileProcessor.distributeProcessing();
+      const watcherApp = new FileWatcherApp(this.absoluteMetaDataPath);
+      watcherApp.startWatching();
+      databaseInserter.processFilesInOrder(watcherApp.getFileObservable());
       await fileProcessor.process(`${this.absoluteDownloadedZipFilePath}/padron_reducido_ruc.txt`);
-      const fileWatcher = new FileWatcherApp(this.absoluteMetaDataPath);
-      fileWatcher.startWatching();
-      fileWatcher.getFileObservable().subscribe({
-         next: (_) => {
-            databaseInserter.processFilesInOrder(fileWatcher.getFileObservable());
-         },
-         complete: () => console.log('[INFO] Todos los archivos han sido procesados.'),
-         error: (err) => console.error('[ERROR] Error al procesar archivos:', err),
-      });
    }
 }
 export const sunatService = new SunatService();

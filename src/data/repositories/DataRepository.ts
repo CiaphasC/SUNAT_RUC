@@ -1,33 +1,69 @@
-import { Repository, DataSource  } from 'typeorm';
+import { Repository, QueryRunner   } from 'typeorm';
 import { RecordEntity } from '../';
-import { AppDataSource } from '../../config/Database';
+import { appDataSource } from '../../config/Database';
 class DataRepository {
    private repository: Repository<RecordEntity>;
-   private dataSource: DataSource;
+   private queryRunner: QueryRunner|null=null;
    constructor() {
-     // Inicializamos el repositorio usando AppDataSource
-      AppDataSource.initialize()
-         .then(() => console.log('Data Source Initialized'))
-         .catch((error) => console.error('Error initializing data source:', error));
-      this.repository = AppDataSource.getRepository(RecordEntity);
-      this.dataSource = AppDataSource;
+      if (!appDataSource.getInstance().isInitialized) {
+         console.log('[INFO] Inicializando DataSource...');
+         appDataSource.getInstance().initialize()
+            .then(() => console.log('[INFO] DataSource inicializado correctamente.'))
+            .catch((error) => {
+               console.error('[ERROR] Error al inicializar DataSource:', error);
+               throw error;
+            });
+      }
+      this.repository = appDataSource.getInstance().getRepository(RecordEntity);
+   }
+
+   public async ensureQueryRunner(): Promise<void> {
+      const appDataSourceInstance = appDataSource.getInstance();
+      // Verifica si el DataSource está inicializado y la conexión es válida
+      if (!appDataSourceInstance.isInitialized) {
+         console.log('[INFO] Reconectando a la base de datos...');
+         await appDataSourceInstance.initialize();
+         console.log('[INFO] Conexión restablecida.');
+      } else {
+         try {
+            // Verifica que la conexión siga activa
+            await appDataSourceInstance.query('SELECT 1');
+         } catch (error) {
+            console.log('[ERROR] La conexión parece estar cerrada. Intentando reiniciar...');
+            await appDataSourceInstance.initialize(); // Reestablece la conexión
+         }
+      }
+      // Verifica el estado del QueryRunner
+      if (!this.queryRunner || this.queryRunner.isReleased) {
+         console.log('[INFO] Inicializando nuevo QueryRunner...');
+         this.queryRunner = appDataSourceInstance.createQueryRunner();
+      }
    }
    /**
    * Inserta nuevos datos en la base de datos.
    * @param data Array de entidades RecordEntity a insertar.
    */
-   public async insertData(data: RecordEntity[]): Promise<void> {
+
+   public async insertData(data: RecordEntity[], queryRunner: QueryRunner): Promise<void> {
       try {
-         await this.repository.insert(data); // Inserta o actualiza registros.
+         await queryRunner.manager
+            .createQueryBuilder()
+            .insert()
+            .into(RecordEntity)
+            .values(data)
+            .execute();
       } catch (error) {
-         console.error('Error al insertar datos:', error);
+         if (queryRunner.isTransactionActive) {
+            await queryRunner.rollbackTransaction(); // Revertir la transacción si hay error
+         }
+         console.error('[ERROR] Error al insertar datos:', error);
          throw error;
       }
    }
    public async truncateData():Promise<void>{
       try {
-         const tableName = this.dataSource.getMetadata(RecordEntity).tableName;
-         await this.dataSource.query(`TRUNCATE TABLE ${tableName}`); // Usa query directamente
+         const tableName = appDataSource.getInstance().getMetadata(RecordEntity).tableName;
+         await appDataSource.getInstance().query(`TRUNCATE TABLE ${tableName}`);// Usa query directamente
          console.log(`Tabla '${tableName}' truncada con éxito.`);
       } catch (error) {
          console.error('Error al truncar la tabla:', error);
@@ -42,19 +78,6 @@ class DataRepository {
          await this.repository.clear(); // Limpia todos los registros de la tabla.
       } catch (error) {
          console.error('Error al eliminar datos:', error);
-         throw error;
-      }
-   }
-   /**
-   * Actualiza los datos en la base de datos, eliminando primero los existentes.
-   * @param data Array de entidades RecordEntity con los datos actualizados.
-   */
-   public async updateData(data: RecordEntity[]): Promise<void> {
-      try {
-        await this.deleteData(); // Limpia la tabla primero.
-        await this.insertData(data); // Inserta los nuevos datos.
-      } catch (error) {
-         console.error('Error al actualizar datos:', error);
          throw error;
       }
    }
@@ -87,8 +110,8 @@ class DataRepository {
       console.log('[INFO] Liberando recursos...');
       try {
          // Cerrar conexión con la base de datos, si está activa
-         if (AppDataSource.isInitialized) {
-            await AppDataSource.destroy(); // Desconecta el DataSource
+         if (appDataSource.getInstance().isInitialized) {
+            appDataSource.getInstance().destroy(); // Desconecta el DataSource
             console.log('[INFO] Conexión con la base de datos cerrada.');
          }
       } catch (error) {

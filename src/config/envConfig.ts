@@ -5,7 +5,7 @@ export const envConfig = {
    sunatUrl: process.env.SUNAT_URL || 'http://www2.sunat.gob.pe/padron_reducido_ruc.zip',
    // Rutas de directorios
    downloadDirectoryPath: process.env.DOWNLOAD_DIRECTORY_PATH || './data',
-   metadataDirectoryPath: process.env.META_DATA_DIRECTORY_PATH || '../metadata',
+   metadataDirectoryPath: process.env.META_DATA_DIRECTORY_PATH || './metadata',
    // Archivos específicos
    downloadedZipFileName: process.env.DOWNLOADED_ZIP_FILENAME,
    headerMetadataJsonFileName: process.env.HEADER_METADATA_JSON_FILENAME,

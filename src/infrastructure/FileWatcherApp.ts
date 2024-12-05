@@ -25,12 +25,11 @@ export class FileWatcherApp extends FileWatcher {
             this.waitForFileToBeStable(filePath)
                .then(() =>{
                   console.log(`[INFO] Procesamiento finalizado para: ${filePath}`);
-                  this.filesInProgress.delete(filePath); // Eliminar del conjunto cuando termine
-                  if (this.filesInProgress.size === 0){
-                     console.log('[INFO] Todos los archivos han sido procesados. Deteniendo la observación.');
-                     this.stopWatching();
+                  if (this.filesInProgress.size === 0) {
+                     console.log('[INFO] Todos los archivos han sido procesados.');
+                     this.filesInProgress.delete(filePath);
+                     this.stopWatching(); // Llamamos a stopWatching
                   }
-
                })
                .catch((err) => console.error(`[ERROR] Error procesando ${filePath}: ${err.message}`));
          })
@@ -38,6 +37,7 @@ export class FileWatcherApp extends FileWatcher {
             console.log(`[INFO] Archivo eliminado: ${filePath}`);
             this.cancelFileWatch(filePath); // Cancelar monitoreo si el archivo ya no existe
             this.filesInProgress.delete(filePath);
+            this.stopWatching();
          });
    }
 
@@ -47,6 +47,7 @@ export class FileWatcherApp extends FileWatcher {
    public stopWatching(): void {
       this.watcher.close();
       this.abortControllers.forEach((controller) => controller.abort());
+      this.fileSubject.complete();
       this.abortControllers.clear();
    }
 }

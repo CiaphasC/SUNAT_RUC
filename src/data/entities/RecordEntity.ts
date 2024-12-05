@@ -1,4 +1,3 @@
-// src/entities/Contribuyente.ts
 import { Entity, PrimaryColumn, Column } from 'typeorm';
 
 @Entity('Contribuyentes')

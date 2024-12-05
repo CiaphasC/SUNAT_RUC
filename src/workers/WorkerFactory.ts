@@ -4,11 +4,21 @@ import appRoot from 'app-root-path';
 
 export class WorkerFactory {
    static createWorker(workerScript: string): Worker {
+      const isProduction = process.env.NODE_ENV === 'production';
+      const scriptFile = isProduction
+         ? `${workerScript}.js`
+         : `${workerScript}.ts`;
+      const scriptPath = isProduction
+         ? path.join(appRoot.path, './dist/workers/', scriptFile)
+         : path.join(appRoot.path, './src/workers/', scriptFile);
+      const appPath = isProduction
+         ? path.join(appRoot.path, './dist/workers/', `worker-thread.js`)
+         : path.join(appRoot.path, './src/workers/', `worker-thread.js`);
       return new Worker(
-         path.join(appRoot.path, './src/workers/', `worker-thread.js`),
+         appPath,
          {
             workerData: {
-               path: path.join(appRoot.path, './src/workers/',`${workerScript}.ts`),
+               path: scriptPath,
             },
          }
       );
