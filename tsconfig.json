@@ -5,11 +5,14 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "moduleResolution": "node",
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,///true
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,//true
     "strict": true,
+    //"declaration": true,//antes no estaba
+    //"sourceMap": true,//antes no estaba
+    "rootDir": "./src",//antes no estaba
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
