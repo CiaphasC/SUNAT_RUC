@@ -68,6 +68,10 @@ export class FileProcessor{
          port1.close();
          worker.terminate();
       });
+      worker.on('error', (err) => {
+         console.error(`Error en Worker: ${err}`);
+         worker.terminate(); // Finaliza el worker si hay un error
+      });
             // Escuchar mensajes del worker
 
       worker.postMessage({ port: port2, result: result, index }, [port2]);

@@ -1,3 +1,3 @@
-import {RecordEntity} from './entities/RecordEntity';
+import {Contribuyentes} from './entities/Contribuyentes';
 import {dataRepository} from './repositories/DataRepository';
-export{RecordEntity,dataRepository}
+export{Contribuyentes,dataRepository}

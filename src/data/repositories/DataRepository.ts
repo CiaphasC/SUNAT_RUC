@@ -1,8 +1,9 @@
 import { Repository, QueryRunner   } from 'typeorm';
-import { RecordEntity } from '../';
+import { Contribuyentes } from '../';
 import { appDataSource } from '../../config/Database';
+
 class DataRepository {
-   private repository: Repository<RecordEntity>;
+   private repository: Repository<Contribuyentes>;
    private queryRunner: QueryRunner|null=null;
    constructor() {
       if (!appDataSource.getInstance().isInitialized) {
@@ -14,7 +15,7 @@ class DataRepository {
                throw error;
             });
       }
-      this.repository = appDataSource.getInstance().getRepository(RecordEntity);
+      this.repository = appDataSource.getInstance().getRepository(Contribuyentes);
    }
 
    public async ensureQueryRunner(): Promise<void> {
@@ -41,15 +42,15 @@ class DataRepository {
    }
    /**
    * Inserta nuevos datos en la base de datos.
-   * @param data Array de entidades RecordEntity a insertar.
+   * @param data Array de entidades Contribuyentes a insertar.
    */
 
-   public async insertData(data: RecordEntity[], queryRunner: QueryRunner): Promise<void> {
+   public async insertData(data: Contribuyentes[], queryRunner: QueryRunner): Promise<void> {
       try {
          await queryRunner.manager
             .createQueryBuilder()
             .insert()
-            .into(RecordEntity)
+            .into(Contribuyentes)
             .values(data)
             .execute();
       } catch (error) {
@@ -62,7 +63,7 @@ class DataRepository {
    }
    public async truncateData():Promise<void>{
       try {
-         const tableName = appDataSource.getInstance().getMetadata(RecordEntity).tableName;
+         const tableName = appDataSource.getInstance().getMetadata(Contribuyentes).tableName;
          await appDataSource.getInstance().query(`TRUNCATE TABLE ${tableName}`);// Usa query directamente
          console.log(`Tabla '${tableName}' truncada con éxito.`);
       } catch (error) {
@@ -85,7 +86,7 @@ class DataRepository {
    * Obtiene todos los registros de la tabla.
    * @returns Array de registros.
    */
-   async getAllRecords(): Promise<RecordEntity[]> {
+   async getAllRecords(): Promise<Contribuyentes[]> {
       try {
          return await this.repository.find();
       } catch (error) {
@@ -98,7 +99,7 @@ class DataRepository {
    * @param criteria Criterios de búsqueda.
    * @returns Array de registros que cumplen con el criterio.
    */
-   async findByCriteria(criteria: Partial<RecordEntity>): Promise<RecordEntity[]> {
+   async findByCriteria(criteria: Partial<Contribuyentes>): Promise<Contribuyentes[]> {
       try {
          return await this.repository.find({ where: criteria });
       } catch (error) {

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import {DataSource} from 'typeorm';
-import {RecordEntity} from '../data/entities/RecordEntity';
+import {Contribuyentes} from '../data/entities/Contribuyentes';
 import {envConfig} from './envConfig';
 class AppDataSource {
    private static instance: DataSource;
@@ -14,19 +14,19 @@ class AppDataSource {
             username: envConfig.db.username,
             password: envConfig.db.password,
             database: envConfig.db.database,
-            entities: [RecordEntity],
+            entities: [Contribuyentes],
             logging: false,
-            synchronize: true,
+            synchronize: process.env.NODE_ENV === 'production' ? false : true,
             options: {
-               encrypt: false,
+               encrypt: true,
                trustServerCertificate: true, // Esto ayuda a evitar errores de SSL
             },pool: {
-               max: 40, // Número máximo de conexiones
-               min: 0,  // Número mínimo de conexiones
-               idleTimeoutMillis: 100000 // Tiempo de espera antes de cerrar una conexión inactiva
+               max: 150, // Número máximo de conexiones
+               min: 5,  // Número mínimo de conexiones
+               idleTimeoutMillis: 600000 // Tiempo de espera antes de cerrar una conexión inactiva
             },
-            connectionTimeout: 100000, // Aumentar el tiempo de conexión
-            requestTimeout: 400000,
+            connectionTimeout: 290000, // Aumentar el tiempo de conexión
+            requestTimeout: 550000,
          });
       }
       return AppDataSource.instance;

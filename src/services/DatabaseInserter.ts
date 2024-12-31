@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs';
 import { QueryRunner   } from 'typeorm';
-import { tap, mergeMap  } from 'rxjs/operators';
+import { tap, mergeMap, catchError  } from 'rxjs/operators';
 import fs from 'fs';
 import StreamArray from 'stream-json/streamers/StreamArray';
-import { RecordEntity, dataRepository } from '../data'; // Importamos el repositorio
+import { Contribuyentes, dataRepository } from '../data'; // Importamos el repositorio
 import { bufferSizeCalculator } from '../utils';
 import { appDataSource } from '../config/Database';
 /**
@@ -12,7 +12,7 @@ import { appDataSource } from '../config/Database';
  */
 export class DatabaseInserter {
    private batchSize: number = 139;
-   private maxConcurrent: number = 7; // Número máximo de procesos paralelos
+   private maxConcurrent: number = 5; // Número máximo de procesos paralelos
    /**
    * Procesa archivos emitidos por el observable de forma paralela.
    * @param fileObservable Observable que emite rutas de archivos.
@@ -21,7 +21,12 @@ export class DatabaseInserter {
       fileObservable
          .pipe(
             tap((filePath) => console.log(`[INFO] Procesando archivo ${filePath}`)),
-            mergeMap((filePath) => this.insertFromJsonStream(filePath), this.maxConcurrent) // Procesamiento secuencial
+            mergeMap((filePath) => this.insertFromJsonStream(filePath), this.maxConcurrent),
+            catchError((error) => {
+               console.error('[ERROR] Error durante el procesamiento:', error);
+               // Emitimos un valor vacío para que el flujo continúe
+               return [];
+            })
          )
          .subscribe({
             complete: () => {
@@ -43,28 +48,44 @@ export class DatabaseInserter {
       console.log(`[INFO] Procesando archivo grande: ${filePath}`);
       const queryRunner = appDataSource.getInstance().createQueryRunner();
 
-      const fileStream = fs.createReadStream(filePath, { encoding: 'utf-8',highWaterMark: bufferSizeCalculator.calculateBufferSize()});
-      const jsonStream = fileStream.pipe(StreamArray.withParser());
-      let batch: RecordEntity[] = [];
-      let lineNumber = 0;
-
-      for await (const { value: jsonLine } of jsonStream) {
-         const record = this.mapJsonToRecord(jsonLine);
-         batch.push(record);
-         lineNumber++;
-
-         if (batch.length === this.batchSize) {
-            await this.safeInsert(batch , queryRunner); // Usamos el repositorio para insertar
-            console.log(`[INFO] Insertadas ${lineNumber} líneas.`);
-         batch = [];
+      try {
+          // Conectar el QueryRunner
+         await queryRunner.connect();
+         console.log('[INFO] QueryRunner conectado.');
+         const fileStream = fs.createReadStream(filePath, {
+            encoding: 'utf-8',
+            highWaterMark: bufferSizeCalculator.calculateBufferSize()
+         });
+         const jsonStream = fileStream.pipe(StreamArray.withParser());
+         let batch: Contribuyentes[] = [];
+         let lineNumber = 0;
+         for await (const { value: jsonLine } of jsonStream) {
+            const record = this.mapJsonToRecord(jsonLine);
+            batch.push(record);
+            lineNumber++;
+            if (batch.length === this.batchSize) {
+               await this.safeInsert(batch, queryRunner); // Usamos el repositorio para insertar
+               console.log(`[INFO] Insertadas ${lineNumber} líneas.`);
+               batch = [];
+            }
+         }
+          // Inserta cualquier resto pendiente en el batch
+         if (batch.length > 0) {
+            await this.safeInsert(batch, queryRunner);
+            console.log(`[INFO] Insertadas las últimas ${batch.length} líneas.`);
+         }
+      } catch (error) {
+         console.error('[ERROR] Error al procesar archivo JSON:', error);
+         throw error; // Re-lanzamos el error para manejarlo a nivel superior si es necesario
+      } finally {
+          // Aseguramos liberar el QueryRunner
+         if (!queryRunner.isReleased) {
+            await queryRunner.release();
+            console.log('[INFO] QueryRunner liberado.');
          }
       }
-      if (batch.length < this.batchSize) {
-         await this.safeInsert(batch , queryRunner);
-         console.log(`[INFO] Insertadas las últimas ${lineNumber} líneas.`);
-      }
    }
-   private async safeInsert(batch: RecordEntity[] , queryRunner: QueryRunner): Promise<void> {
+   private async safeInsert(batch: Contribuyentes[] , queryRunner: QueryRunner): Promise<void> {
       try {
          await dataRepository.insertData(batch , queryRunner);
       } catch (error: unknown) {
@@ -78,15 +99,14 @@ export class DatabaseInserter {
             throw error; // Lanza el error si no es de conexión
          }
 
-
       }
    }
-   private async connectToDatabase(maxRetries: number = 6, delay: number = 3000): Promise<void>{
+   private async connectToDatabase(maxRetries: number = 12, delay: number = 19000): Promise<void>{
       let retries = 0;
       while (retries < maxRetries){
          try {
             console.log(`[INFO] Intentando conectar a la base de datos. Intento ${retries + 1}`);
-            await dataRepository.ensureQueryRunner(); // Aquí usamos initialize de DataSource
+            await dataRepository.ensureQueryRunner(); 
             console.log('[INFO] Conexión exitosa a la base de datos.');
             return;
          } catch (error) {
@@ -107,24 +127,24 @@ export class DatabaseInserter {
    * Convierte un objeto JSON a la entidad RecordEntity.
    * @param data Objeto JSON.
    */
-   private mapJsonToRecord(data: any): RecordEntity {
-      const record = new RecordEntity();
-      record.ruc = data.RUC;
-      record.nombreRazonSocial = data.NOMBRE_O_RAZON_SOCIAL;
-      record.estadoContribuyente = data.ESTADO_DEL_CONTRIBUYENTE;
-      record.condicionDomicilio = data.CONDICION_DE_DOMICILIO;
-      record.ubigeo = data.UBIGEO;
-      record.tipoVia = data.TIPO_DE_VIA;
-      record.nombreVia = data.NOMBRE_DE_VIA;
-      record.codigoZona = data.CODIGO_DE_ZONA;
-      record.tipoZona = data.TIPO_DE_ZONA;
-      record.numero = data.NUMERO;
-      record.interior = data.INTERIOR;
-      record.lote = data.LOTE;
-      record.departamento = data.DEPARTAMENTO;
-      record.manzana = data.MANZANA;
-      record.kilometro = data.KILOMETRO;
-      return record;
+   private mapJsonToRecord(data: any): Contribuyentes {
+      const record = new Contribuyentes();
+      record.RUC = data.RUC;
+      record.NOMBRE_O_RAZON_SOCIAL = data.NOMBRE_O_RAZON_SOCIAL;
+      record.ESTADO_DEL_CONTRIBUYENTE = data.ESTADO_DEL_CONTRIBUYENTE;
+      record.CONDICION_DE_DOMICILIO = data.CONDICION_DE_DOMICILIO;
+      record.UBIGEO = data.UBIGEO;
+      record.TIPO_DE_VIA = data.TIPO_DE_VIA;
+      record.NOMBRE_DE_VIA = data.NOMBRE_DE_VIA;
+      record.CODIGO_DE_ZONA = data.CODIGO_DE_ZONA;
+      record.TIPO_DE_ZONA = data.TIPO_DE_ZONA;
+      record.NUMERO = data.NUMERO;
+      record.INTERIOR = data.INTERIOR;
+      record.LOTE = data.LOTE;
+      record.DEPARTAMENTO = data.DEPARTAMENTO;
+      record.MANZANA = data.MANZANA;
+      record.KILOMETRO = data.KILOMETRO;
+      return { ...record };
    }
 }
 

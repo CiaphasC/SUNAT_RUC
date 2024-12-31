@@ -1,4 +1,15 @@
 "use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -48,19 +59,29 @@ var operators_1 = require("rxjs/operators");
 var fs_1 = require("fs");
 var StreamArray_1 = require("stream-json/streamers/StreamArray");
 var data_1 = require("../data"); // Importamos el repositorio
+var utils_1 = require("../utils");
+var Database_1 = require("../config/Database");
+/**
+ * Clase responsable de insertar datos en la base de datos a partir de archivos procesados.
+ * Utiliza streams para manejar grandes volúmenes de datos y realiza inserciones en lotes.
+ */
 var DatabaseInserter = /** @class */ (function () {
     function DatabaseInserter() {
-        this.batchSize = 132;
+        this.batchSize = 139;
+        this.maxConcurrent = 5; // Número máximo de procesos paralelos
     }
     /**
-    * Procesa archivos emitidos por el observable en orden.
+    * Procesa archivos emitidos por el observable de forma paralela.
     * @param fileObservable Observable que emite rutas de archivos.
     */
     DatabaseInserter.prototype.processFilesInOrder = function (fileObservable) {
         var _this = this;
         fileObservable
-            .pipe(operators_1.tap(function (filePath) { return console.log("[INFO] Procesando archivo " + filePath); }), operators_1.concatMap(function (filePath) { return _this.insertFromJsonStream(filePath); }) // Procesamiento secuencial
-        )
+            .pipe(operators_1.tap(function (filePath) { return console.log("[INFO] Procesando archivo " + filePath); }), operators_1.mergeMap(function (filePath) { return _this.insertFromJsonStream(filePath); }, this.maxConcurrent), operators_1.catchError(function (error) {
+            console.error('[ERROR] Error durante el procesamiento:', error);
+            // Emitimos un valor vacío para que el flujo continúe
+            return [];
+        }))
             .subscribe({
             complete: function () {
                 console.log('[INFO] Todos los archivos han sido procesados.');
@@ -68,6 +89,7 @@ var DatabaseInserter = /** @class */ (function () {
             },
             error: function (err) {
                 console.error('[ERROR] Error procesando archivos:', err);
+                data_1.dataRepository.cleanup();
             }
         });
     };
@@ -78,86 +100,186 @@ var DatabaseInserter = /** @class */ (function () {
     DatabaseInserter.prototype.insertFromJsonStream = function (filePath) {
         var e_1, _a;
         return __awaiter(this, void 0, Promise, function () {
-            var fileStream, jsonStream, batch, lineNumber, jsonStream_1, jsonStream_1_1, jsonLine, record, e_1_1;
+            var queryRunner, fileStream, jsonStream, batch, lineNumber, jsonStream_1, jsonStream_1_1, jsonLine, record, e_1_1, error_1;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
                         console.log("[INFO] Procesando archivo grande: " + filePath);
-                        fileStream = fs_1["default"].createReadStream(filePath, { encoding: 'utf-8' });
+                        queryRunner = Database_1.appDataSource.getInstance().createQueryRunner();
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 18, 19, 22]);
+                        // Conectar el QueryRunner
+                        return [4 /*yield*/, queryRunner.connect()];
+                    case 2:
+                        // Conectar el QueryRunner
+                        _b.sent();
+                        console.log('[INFO] QueryRunner conectado.');
+                        fileStream = fs_1["default"].createReadStream(filePath, {
+                            encoding: 'utf-8',
+                            highWaterMark: utils_1.bufferSizeCalculator.calculateBufferSize()
+                        });
                         jsonStream = fileStream.pipe(StreamArray_1["default"].withParser());
                         batch = [];
                         lineNumber = 0;
-                        _b.label = 1;
-                    case 1:
-                        _b.trys.push([1, 7, 8, 13]);
-                        jsonStream_1 = __asyncValues(jsonStream);
-                        _b.label = 2;
-                    case 2: return [4 /*yield*/, jsonStream_1.next()];
+                        _b.label = 3;
                     case 3:
-                        if (!(jsonStream_1_1 = _b.sent(), !jsonStream_1_1.done)) return [3 /*break*/, 6];
+                        _b.trys.push([3, 9, 10, 15]);
+                        jsonStream_1 = __asyncValues(jsonStream);
+                        _b.label = 4;
+                    case 4: return [4 /*yield*/, jsonStream_1.next()];
+                    case 5:
+                        if (!(jsonStream_1_1 = _b.sent(), !jsonStream_1_1.done)) return [3 /*break*/, 8];
                         jsonLine = jsonStream_1_1.value.value;
                         record = this.mapJsonToRecord(jsonLine);
                         batch.push(record);
                         lineNumber++;
-                        if (!(batch.length === this.batchSize)) return [3 /*break*/, 5];
-                        return [4 /*yield*/, data_1.dataRepository.insertData(batch)];
-                    case 4:
+                        if (!(batch.length === this.batchSize)) return [3 /*break*/, 7];
+                        return [4 /*yield*/, this.safeInsert(batch, queryRunner)];
+                    case 6:
                         _b.sent(); // Usamos el repositorio para insertar
                         console.log("[INFO] Insertadas " + lineNumber + " l\u00EDneas.");
                         batch = [];
-                        _b.label = 5;
-                    case 5: return [3 /*break*/, 2];
-                    case 6: return [3 /*break*/, 13];
-                    case 7:
+                        _b.label = 7;
+                    case 7: return [3 /*break*/, 4];
+                    case 8: return [3 /*break*/, 15];
+                    case 9:
                         e_1_1 = _b.sent();
                         e_1 = { error: e_1_1 };
-                        return [3 /*break*/, 13];
-                    case 8:
-                        _b.trys.push([8, , 11, 12]);
-                        if (!(jsonStream_1_1 && !jsonStream_1_1.done && (_a = jsonStream_1["return"]))) return [3 /*break*/, 10];
+                        return [3 /*break*/, 15];
+                    case 10:
+                        _b.trys.push([10, , 13, 14]);
+                        if (!(jsonStream_1_1 && !jsonStream_1_1.done && (_a = jsonStream_1["return"]))) return [3 /*break*/, 12];
                         return [4 /*yield*/, _a.call(jsonStream_1)];
-                    case 9:
-                        _b.sent();
-                        _b.label = 10;
-                    case 10: return [3 /*break*/, 12];
                     case 11:
+                        _b.sent();
+                        _b.label = 12;
+                    case 12: return [3 /*break*/, 14];
+                    case 13:
                         if (e_1) throw e_1.error;
                         return [7 /*endfinally*/];
-                    case 12: return [7 /*endfinally*/];
-                    case 13:
-                        if (!(batch.length < this.batchSize)) return [3 /*break*/, 15];
-                        return [4 /*yield*/, data_1.dataRepository.insertData(batch)];
-                    case 14:
+                    case 14: return [7 /*endfinally*/];
+                    case 15:
+                        if (!(batch.length > 0)) return [3 /*break*/, 17];
+                        return [4 /*yield*/, this.safeInsert(batch, queryRunner)];
+                    case 16:
                         _b.sent();
-                        console.log("[INFO] Insertadas las \u00FAltimas " + lineNumber + " l\u00EDneas.");
-                        _b.label = 15;
-                    case 15: return [2 /*return*/];
+                        console.log("[INFO] Insertadas las \u00FAltimas " + batch.length + " l\u00EDneas.");
+                        _b.label = 17;
+                    case 17: return [3 /*break*/, 22];
+                    case 18:
+                        error_1 = _b.sent();
+                        console.error('[ERROR] Error al procesar archivo JSON:', error_1);
+                        throw error_1; // Re-lanzamos el error para manejarlo a nivel superior si es necesario
+                    case 19:
+                        if (!!queryRunner.isReleased) return [3 /*break*/, 21];
+                        return [4 /*yield*/, queryRunner.release()];
+                    case 20:
+                        _b.sent();
+                        console.log('[INFO] QueryRunner liberado.');
+                        _b.label = 21;
+                    case 21: return [7 /*endfinally*/];
+                    case 22: return [2 /*return*/];
                 }
             });
         });
+    };
+    DatabaseInserter.prototype.safeInsert = function (batch, queryRunner) {
+        return __awaiter(this, void 0, Promise, function () {
+            var error_2;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        _a.trys.push([0, 2, , 7]);
+                        return [4 /*yield*/, data_1.dataRepository.insertData(batch, queryRunner)];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 7];
+                    case 2:
+                        error_2 = _a.sent();
+                        if (!(this.isDatabaseError(error_2) && error_2.code === 'ECONNCLOSED')) return [3 /*break*/, 5];
+                        console.log('[INFO] Reconectando a la base de datos...');
+                        return [4 /*yield*/, this.connectToDatabase()];
+                    case 3:
+                        _a.sent();
+                        console.log('[INFO] Reconexión exitosa. Reintentando inserción...');
+                        return [4 /*yield*/, this.safeInsert(batch, queryRunner)];
+                    case 4:
+                        _a.sent(); // Reintenta la inserción
+                        return [3 /*break*/, 6];
+                    case 5:
+                        console.error('[ERROR] Error al insertar datos:', error_2);
+                        throw error_2; // Lanza el error si no es de conexión
+                    case 6: return [3 /*break*/, 7];
+                    case 7: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    DatabaseInserter.prototype.connectToDatabase = function (maxRetries, delay) {
+        if (maxRetries === void 0) { maxRetries = 12; }
+        if (delay === void 0) { delay = 19000; }
+        return __awaiter(this, void 0, Promise, function () {
+            var retries, error_3;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        retries = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(retries < maxRetries)) return [3 /*break*/, 7];
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 4, , 6]);
+                        console.log("[INFO] Intentando conectar a la base de datos. Intento " + (retries + 1));
+                        return [4 /*yield*/, data_1.dataRepository.ensureQueryRunner()];
+                    case 3:
+                        _a.sent();
+                        console.log('[INFO] Conexión exitosa a la base de datos.');
+                        return [2 /*return*/];
+                    case 4:
+                        error_3 = _a.sent();
+                        retries++;
+                        console.error("[ERROR] Error al conectar: " + error_3 + ". Reintentando en " + delay + " ms...");
+                        if (retries >= maxRetries) {
+                            console.error('[ERROR] No se pudo establecer conexión después de varios intentos.');
+                            throw error_3;
+                        }
+                        return [4 /*yield*/, new Promise(function (res) { return setTimeout(res, delay * retries); })];
+                    case 5:
+                        _a.sent(); // Retraso exponencial
+                        return [3 /*break*/, 6];
+                    case 6: return [3 /*break*/, 1];
+                    case 7: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    DatabaseInserter.prototype.isDatabaseError = function (error) {
+        return typeof error === 'object' && error !== null && 'code' in error;
     };
     /**
     * Convierte un objeto JSON a la entidad RecordEntity.
     * @param data Objeto JSON.
     */
     DatabaseInserter.prototype.mapJsonToRecord = function (data) {
-        var record = new data_1.RecordEntity();
-        record.ruc = data.RUC;
-        record.nombreRazonSocial = data.NOMBRE_O_RAZON_SOCIAL;
-        record.estadoContribuyente = data.ESTADO_DEL_CONTRIBUYENTE;
-        record.condicionDomicilio = data.CONDICION_DE_DOMICILIO;
-        record.ubigeo = data.UBIGEO;
-        record.tipoVia = data.TIPO_DE_VIA;
-        record.nombreVia = data.NOMBRE_DE_VIA;
-        record.codigoZona = data.CODIGO_DE_ZONA;
-        record.tipoZona = data.TIPO_DE_ZONA;
-        record.numero = data.NUMERO;
-        record.interior = data.INTERIOR;
-        record.lote = data.LOTE;
-        record.departamento = data.DEPARTAMENTO;
-        record.manzana = data.MANZANA;
-        record.kilometro = data.KILOMETRO;
-        return record;
+        var record = new data_1.Contribuyentes();
+        record.RUC = data.RUC;
+        record.NOMBRE_O_RAZON_SOCIAL = data.NOMBRE_O_RAZON_SOCIAL;
+        record.ESTADO_DEL_CONTRIBUYENTE = data.ESTADO_DEL_CONTRIBUYENTE;
+        record.CONDICION_DE_DOMICILIO = data.CONDICION_DE_DOMICILIO;
+        record.UBIGEO = data.UBIGEO;
+        record.TIPO_DE_VIA = data.TIPO_DE_VIA;
+        record.NOMBRE_DE_VIA = data.NOMBRE_DE_VIA;
+        record.CODIGO_DE_ZONA = data.CODIGO_DE_ZONA;
+        record.TIPO_DE_ZONA = data.TIPO_DE_ZONA;
+        record.NUMERO = data.NUMERO;
+        record.INTERIOR = data.INTERIOR;
+        record.LOTE = data.LOTE;
+        record.DEPARTAMENTO = data.DEPARTAMENTO;
+        record.MANZANA = data.MANZANA;
+        record.KILOMETRO = data.KILOMETRO;
+        return __assign({}, record);
     };
     return DatabaseInserter;
 }());

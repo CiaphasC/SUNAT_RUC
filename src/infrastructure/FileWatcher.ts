@@ -38,7 +38,6 @@ export class FileWatcher {
          }
       } finally {
          this.abortControllers.delete(filePath); // Limpiar referencias
-         //this.fileSubject.complete();
       }
    }
 
