@@ -1,8 +1,8 @@
 # 🌐 **SUNAT RUC Processor**
 
-<img src="assets/logo.webp" alt="Logo" width="100"/>
 
-> 💼 Procesamiento automatizado y eficiente del padrón reducido de la SUNAT con actualizaciones en tiempo real y gestión avanzada de bases de datos.
+
+<img src="assets/logo.webp" alt="Logo" width="100"/> > 💼 Procesamiento automatizado y eficiente del padrón reducido de la SUNAT con actualizaciones en tiempo real y gestión avanzada de bases de datos.
 
 ---
 
