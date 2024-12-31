@@ -107,15 +107,15 @@ src/
 
 ### 📥 **Descarga y Procesamiento**
 
-El sistema descarga automáticamente el archivo del padrón reducido, lo descomprime y procesa los datos en paralelo, garantizando alta eficiencia incluso para volúmenes grandes de datos.
+🚀El sistema descarga automáticamente el archivo del padrón reducido, lo descomprime y procesa los datos en paralelo, garantizando alta eficiencia incluso para volúmenes grandes de datos.
 
 ### 💾 **Integración con SQL Server**
 
-Utiliza TypeORM para sincronizar y gestionar datos en una base de datos SQL Server, asegurando consistencia y escalabilidad.
+🔗Utiliza TypeORM para sincronizar y gestionar datos en una base de datos SQL Server, asegurando consistencia y escalabilidad.
 
 ### 🔍 **Observación de Cambios**
 
-Monitoriza los metadatos de los archivos para detectar cambios y ejecutar procesos automáticamente cuando sea necesario.
+🔄Monitoriza los metadatos de los archivos para detectar cambios y ejecutar procesos automáticamente cuando sea necesario.
 
 ---
 
@@ -127,13 +127,6 @@ Monitoriza los metadatos de los archivos para detectar cambios y ejecutar proces
 
 ---
 
-## 🤝 **Contribuir**
-
-1. Haz un fork del proyecto.
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`).
-3. Haz commit de tus cambios (`git commit -m 'Agrega nueva funcionalidad'`).
-4. Haz push a la rama (`git push origin feature/nueva-funcionalidad`).
-5. Abre un Pull Request.
 
 ---
 
