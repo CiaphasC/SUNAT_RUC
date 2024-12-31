@@ -143,5 +143,5 @@ Este proyecto está bajo la licencia [MIT](LICENSE).
 
 ---
 
-![Footer](https://via.placeholder.com/728x90.png?text=Gracias+por+usar+SUNAT+RUC+Processor)
+
 
