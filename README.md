@@ -1,6 +1,6 @@
 # 🌐 **SUNAT RUC Processor**
 
-![SUNAT RUC Processor]([https://via.placeholder.com/728x90.png?text=SUNAT+RUC+Processor+Logo](https://github.com/CiaphasC/SUNAT_RUC/blob/main/assets/logo.webp))
+![Logo](assets/logo.webp)
 
 > 💼 Procesamiento automatizado y eficiente del padrón reducido de la SUNAT con actualizaciones en tiempo real y gestión avanzada de bases de datos.
 
